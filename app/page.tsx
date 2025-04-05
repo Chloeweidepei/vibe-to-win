@@ -15,13 +15,15 @@ export default function Home() {
     
     // Random number of full rotations (3-5) plus a random ending position
     const rotations = (Math.floor(Math.random() * 3) + 3) * 360;
-    const endPosition = Math.random() * 360;
+    const isWinner = Math.random() > 0.5;
+    // For winners, end on green section (0-90 degrees)
+    // For losers, end on red section (180-270 degrees)
+    const endPosition = isWinner ? Math.random() * 90 : 180 + Math.random() * 90;
     const totalRotation = rotations + endPosition;
     
     setWheelRotation(totalRotation);
     
     setTimeout(() => {
-      const isWinner = Math.random() > 0.5;
       setResult(isWinner ? "Yay congrats you win!" : "Oh no maybe next time");
       setIsSpinning(false);
     }, 3000);
@@ -44,33 +46,47 @@ export default function Home() {
           </p>
 
           <div className="relative mt-12">
-            <motion.div
-              className="relative w-64 h-64 mx-auto mb-8"
-              style={{
-                rotate: wheelRotation,
-                transition: isSpinning ? "all 3s cubic-bezier(0.3, 0.1, 0.3, 1)" : "none"
-              }}
-            >
+            <div className="relative w-64 h-64 mx-auto mb-8">
+              {/* Static Wheel */}
               <div className="absolute inset-0 rounded-full border-8 border-primary/20">
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-full h-full"
-                    style={{
-                      transform: `rotate(${i * 45}deg)`,
-                    }}
-                  >
-                    <div className="w-1 h-1/2 bg-primary/40 mx-auto rounded-full" />
-                  </div>
-                ))}
+                {[...Array(8)].map((_, i) => {
+                  const isWinSection = i < 4; // First 4 sections are win
+                  return (
+                    <div
+                      key={i}
+                      className="absolute w-full h-full"
+                      style={{
+                        transform: `rotate(${i * 45}deg)`,
+                      }}
+                    >
+                      <div className={`w-1 h-1/2 mx-auto rounded-full ${
+                        isWinSection ? 'bg-green-500/60' : 'bg-red-500/60'
+                      }`} />
+                    </div>
+                  );
+                })}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Gift className={`w-12 h-12 ${isSpinning ? 'text-primary animate-bounce' : 'text-primary/60'}`} />
+                  <Gift className={`w-12 h-12 ${
+                    isSpinning ? 'text-primary animate-bounce' : 
+                    result?.includes('win') ? 'text-green-500' : 
+                    result?.includes('next time') ? 'text-red-500' : 
+                    'text-primary/60'
+                  }`} />
                 </div>
               </div>
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <div className="w-4 h-8 bg-primary rounded-t-full" />
-              </div>
-            </motion.div>
+
+              {/* Spinning Pointer */}
+              <motion.div
+                className="absolute top-[calc(50%-3.5rem)] left-1/2 transform -translate-x-1/2"
+                style={{
+                  rotate: wheelRotation,
+                  transformOrigin: 'center bottom',
+                  transition: isSpinning ? "all 3s cubic-bezier(0.3, 0.1, 0.3, 1)" : "none"
+                }}
+              >
+                <div className="w-4 h-16 bg-primary rounded-t-full" />
+              </motion.div>
+            </div>
 
             <button
               onClick={playRaffle}
